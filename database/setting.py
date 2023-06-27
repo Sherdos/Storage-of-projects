@@ -6,3 +6,5 @@ def create_database():
     conn.close()
 create_database()
 
+
+DATABASE_NAME = 'projects.db'
