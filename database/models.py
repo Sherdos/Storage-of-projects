@@ -1,47 +1,55 @@
 import sqlite3
-from types import NoneType
-
-
-def data_open(command, commit=False):
-    def connect(func):
-        def wrapper(self, *args, **kwargs):
-            conn = sqlite3.connect('projects.db')
-            par = func(self,*args,**kwargs)
-            if commit:
-                conn.execute(command,par[0])
-                conn.commit()
-                info = None
-            else:
-                print(par)
-                if par  is not None:
-                    info = conn.execute(command,par[0]).fetchall()
-                else:
-                    info = conn.execute(command).fetchall()
-            conn.close()
-            return info
-        return wrapper
-    return connect
-
-        
-
-print()
-class Project():
-    def __init__(self,  title, description):
+class Project:
+    def __init__(self, title, description):
         self.title = title
         self.description = description
 
-    def add_project(self):
-        self.__write_file(self.title, self.description)
-        print('Your project added successfully.')
+    @staticmethod
+    def connect_db(database):
+        def decorator(method):
+            def wrapper(self, *args, **kwargs):
+                try:
+                    with sqlite3.connect(database) as conn:
+                        result = method(self,conn, *args, **kwargs)
+                        conn.commit()
+                    return result
+                except sqlite3.Error as e:
+                    print(f"Ошибка при выполнении запроса: {e}")
+                    return None
+            return wrapper
+        return decorator
 
-    @data_open("INSERT INTO project (title,description) VALUES (?,?);",True)
-    def __write_file(self,text, description):
-        return text, description
-    
-    @data_open("SELECT * FROM project;")
-    def all_objects(self):
-        return None
-    
-    @data_open("DELETE FROM project where id = ?")
-    def delete_project(id):
-        return id
+    @connect_db('projects.db')
+    def save_project(self, conn):
+        query = "INSERT INTO project (title, description) VALUES (?, ?);"
+        conn.execute(query, (self.title, self.description))
+        if conn.total_changes == 1:
+            print('Your project added successfully.')
+        else:
+            print('Failed to add the project.')
+
+    @staticmethod
+    @connect_db('projects.db')
+    def all_objects(self, conn):
+        query = "SELECT * FROM project;"
+        result = conn.execute(query).fetchall()
+        return result
+
+    @staticmethod
+    @connect_db('projects.db')
+    def delete_project(self, conn, project_id):
+        # Проверяем наличие проекта с указанным идентификатором
+        check_query = "SELECT 1 FROM project WHERE id = ?;"
+        check_result = conn.execute(check_query, (project_id,)).fetchone()
+        if not check_result:
+            print('Project not found.')
+            return
+
+        query = "DELETE FROM project WHERE id = ?;"
+        conn.execute(query, (project_id,))
+        if conn.total_changes == 1:
+            print('Project deleted successfully.')
+        else:
+            print('Failed to delete the project.')
+
+
