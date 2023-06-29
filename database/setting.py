@@ -1,11 +1,24 @@
-import sqlite3
+import sys
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+sys.path.append(BASE_DIR)
+
+
+
+
 DATABASE_NAME = 'projects.db'
 
-def create_database():
-    conn = sqlite3.connect(DATABASE_NAME)
-    print ("Opened database successfully")
-    conn.execute('CREATE TABLE project (ID INTEGER PRIMARY KEY AUTOINCREMENT, title CHAR(50), description text);')
-    conn.close()
-create_database()
+
+
+
+
+
+
+
+
+
+
+
 
 

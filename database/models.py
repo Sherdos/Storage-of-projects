@@ -1,55 +1,68 @@
-import sqlite3
-class Project:
-    def __init__(self, title, description):
-        self.title = title
-        self.description = description
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import Column, Integer, String
+from sqldb import Base
+from sqlalchemy import create_engine
 
-    @staticmethod
-    def connect_db(database):
-        def decorator(method):
-            def wrapper(self, *args, **kwargs):
-                try:
-                    with sqlite3.connect(database) as conn:
-                        result = method(self,conn, *args, **kwargs)
-                        conn.commit()
-                    return result
-                except sqlite3.Error as e:
-                    print(f"Ошибка при выполнении запроса: {e}")
-                    return None
-            return wrapper
-        return decorator
 
-    @connect_db('projects.db')
-    def save_project(self, conn):
-        query = "INSERT INTO project (title, description) VALUES (?, ?);"
-        conn.execute(query, (self.title, self.description))
-        if conn.total_changes == 1:
-            print('Your project added successfully.')
-        else:
-            print('Failed to add the project.')
+def get_session():
+    engine = create_engine("sqlite:///database.db", echo=True)
+    Base.metadata.create_all(engine)
+    Session = sessionmaker(bind=engine)
+    with Session() as session:
+        return session
 
-    @staticmethod
-    @connect_db('projects.db')
-    def all_objects(self, conn):
-        query = "SELECT * FROM project;"
-        result = conn.execute(query).fetchall()
-        return result
+class Object():
 
-    @staticmethod
-    @connect_db('projects.db')
-    def delete_project(self, conn, project_id):
-        # Проверяем наличие проекта с указанным идентификатором
-        check_query = "SELECT 1 FROM project WHERE id = ?;"
-        check_result = conn.execute(check_query, (project_id,)).fetchone()
-        if not check_result:
-            print('Project not found.')
-            return
+    def __init__(self, obj):
+        self.obj = obj
 
-        query = "DELETE FROM project WHERE id = ?;"
-        conn.execute(query, (project_id,))
-        if conn.total_changes == 1:
-            print('Project deleted successfully.')
-        else:
-            print('Failed to delete the project.')
+    def create(self, **kwargs):
+        with get_session() as session:
+            obj = self.obj(**kwargs)
+            session.add(obj)
+            session.commit()
+            return obj
+
+    def all(self):
+        with get_session() as session:
+            objects = session.query(self.obj).all()
+            return objects
+
+    def filter(self, *args, **kwargs):
+        with get_session() as session:
+            objects = session.query(self.obj).filter_by(*args, **kwargs).all()
+            return objects
+    
+    def save(self, obj):
+        session = get_session()
+        session.add(obj)
+        session.commit()
+
+class Model():
+    @classmethod
+    @property
+    def object(cls):
+        return Object(cls)
+
+
+class Project(Base,Model):
+    __tablename__ = 'projects'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    description = Column(String)
+
+    def __str__(self):
+        return f'{self.name}'
+
+    
+    
+# Base.metadata.create_all(engine)
+project = Project.object.all()
+print(project)
+# project.name = 'Updated Project'
+# Project.object.save(project)
+
+
 
 
