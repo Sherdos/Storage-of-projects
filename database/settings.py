@@ -7,7 +7,7 @@ sys.path.append(BASE_DIR)
 
 
 
-DATABASE_NAME = 'projects.db'
+DATABASE_NAME = 'database.db'
 
 
 

@@ -1,36 +1,23 @@
-import flet as ft
+import os
+import sys
 
+def main():
+    """Run administrative tasks."""
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'database.settings')
+    # try:
+    from logic.utils import execute_from_command_line
+    # except ImportError as exc:
+        # raise ImportError(
+        #     "Couldn't import Django. Are you sure it's installed and "
+        #     "available on your PYTHONPATH environment variable? Did you "
+        #     "forget to activate a virtual environment?"
+        # ) from exc
+        # print(exc)
+    execute_from_command_line(sys.argv)
 
-import database
+if __name__ == '__main__':
+    main()
 
-
-def add_project(title,description):
-    project = database.Project(title.value, description.value)
-    project.save_project()
-
-add_project_lambda = lambda title, description: database.Project(title.value, description.value).save_project()
-
-def get_all_projects():
-    info = database.Project.all_objects(None)
-    return info
-
-get_all_projects_lambda = lambda:database.Project.all_objects(None)
-
-
-
-def delete_project(project_id):
-    info = database.Project.delete_project(None,project_id)
-    return info
-
-delete_project_lambda = lambda id : database.Project.delete_project(None,   id)
-
-
-# def main(page: ft.Page):
-
-#     page.add()
-
-
-# ft.app(target=main)
 
 # schedule = {
 #     'Monday': ['Movie'],
