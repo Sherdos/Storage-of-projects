@@ -34,12 +34,12 @@ class Object():
     def filter(self, *args, **kwargs):
         with get_session() as session:
             objects = session.query(self.obj).filter_by(*args, **kwargs).all()
-            return objects
+            if len(objects) > 1:
+                
+                return objects
+            return objects[0]
     
-    def save(self, obj):
-        session = get_session()
-        session.add(obj)
-        session.commit()
+    
 
 
 class Model():
@@ -47,3 +47,13 @@ class Model():
     @property
     def object(cls):
         return Object(cls)
+    
+    def save(self):
+        session = get_session()
+        session.add(self)
+        session.commit()
+
+    def delete(self):
+        session = get_session()
+        session.delete(self)
+        session.commit()
